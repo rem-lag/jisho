@@ -103,6 +103,8 @@ fn extract_reading_from_header(header_text: &str) -> String {
 }
 
 fn extract_reading_from_content(content: &ElementRef) -> String {
+    let mut readings = Vec::new();
+    
     // Look for paragraph with reading pattern
     let p_selector = Selector::parse("p").unwrap();
     for p in content.select(&p_selector) {
@@ -110,11 +112,39 @@ fn extract_reading_from_content(content: &ElementRef) -> String {
         if p_text.contains("読み方：") {
             if let Some(start) = p_text.find("読み方：") {
                 let after_marker = &p_text[start + "読み方：".len()..];
-                return after_marker.trim().to_string();
+                readings.push(after_marker.trim().to_string());
+            }
+        }
+        
+        // Look for alternative readings like 《「いぞん」とも》
+        if let Some(start) = p_text.find("《「") {
+            if let Some(end) = p_text.find("」とも》") {
+                let alt_reading = &p_text[start + "《「".len()..end];
+                if !alt_reading.is_empty() {
+                    readings.push(alt_reading.to_string());
+                }
+            }
+        }
+        
+        // Look for pronunciation notes like 「ふいんき」と発音する
+        if let Some(start) = p_text.find("「") {
+            if let Some(end) = p_text.find("」と発音する") {
+                let alt_reading = &p_text[start + "「".len()..end];
+                if !alt_reading.is_empty() && alt_reading.chars().all(|c| "あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんがぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽゃゅょっー".contains(c)) {
+                    readings.push(alt_reading.to_string());
+                }
             }
         }
     }
-    String::new()
+    
+    if readings.is_empty() {
+        String::new()
+    } else if readings.len() == 1 {
+        readings[0].clone()
+    } else {
+        // Join multiple readings with "・"
+        readings.join("・")
+    }
 }
 
 fn extract_part_of_speech(content: &ElementRef) -> String {
