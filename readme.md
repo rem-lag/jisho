@@ -7,3 +7,5 @@ eg:
 
 uses the wwwjdic API kindly made available by Jim Breen
 
+The `-j` flag can be passed to return monolingual japanese definitions
+
